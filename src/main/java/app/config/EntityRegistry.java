@@ -1,5 +1,6 @@
 package app.config;
 
+import app.entities.Incident;
 import org.hibernate.cfg.Configuration;
 
 final class EntityRegistry {
@@ -7,7 +8,6 @@ final class EntityRegistry {
     private EntityRegistry() {}
 
     static void registerEntities(Configuration configuration) {
-        // Register entity classes here once they have been created.
-        // Example: configuration.addAnnotatedClass(YourEntity.class);
+        configuration.addAnnotatedClass(Incident.class);
     }
 }

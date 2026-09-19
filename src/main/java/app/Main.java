@@ -1,17 +1,41 @@
 package app;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import app.config.HibernateConfig;
+import app.dao.IncidentDAO;
+import app.entities.Incident;
+import jakarta.persistence.EntityManagerFactory;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+public class Main {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf =
+                HibernateConfig.getEntityManagerFactory();
+
+        try {
+            IncidentDAO incidentDAO = new IncidentDAO(emf);
+
+            Incident incident = new Incident();
+            incident.setTitle("Test incident");
+            incident.setDescription("Testing DAO methods.");
+
+            Incident saved = incidentDAO.create(incident);
+            Long id = saved.getId();
+            System.out.println("Oprettet: " + saved);
+
+            Incident found = incidentDAO.findById(id);
+            System.out.println("Hentet: " + found);
+
+            found.setTitle("Updated test incident");
+            incidentDAO.update(found);
+            System.out.println("Opdateret: " + incidentDAO.findById(id));
+
+            System.out.println("Alle hændelser:");
+            incidentDAO.getAll().forEach(System.out::println);
+
+            incidentDAO.delete(id);
+            System.out.println("Efter sletning: " + incidentDAO.findById(id));
+        } finally {
+            emf.close();
         }
     }
 }
