@@ -6,9 +6,10 @@ import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class UserDAO {
+public class UserDAO implements IUserDAO {
     private final EntityManagerFactory emf;
 
+    @Override
     public User create(User user){
         try(EntityManager em = emf.createEntityManager()){
             em.getTransaction().begin();
@@ -25,6 +26,8 @@ public class UserDAO {
             }
         }
     }
+
+    @Override
     public User findByEmail(String email) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery(

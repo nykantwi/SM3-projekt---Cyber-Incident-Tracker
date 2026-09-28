@@ -8,10 +8,11 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class IncidentDAO {
+public class IncidentDAO implements IIncidentDAO{
 
     private final EntityManagerFactory emf;
 
+    @Override
     public Incident create(Incident incident) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
@@ -29,12 +30,14 @@ public class IncidentDAO {
         }
     }
 
+    @Override
     public Incident findById(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.find(Incident.class, id);
         }
     }
 
+    @Override
     public List<Incident> getAll() {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery(
@@ -44,6 +47,7 @@ public class IncidentDAO {
         }
     }
 
+    @Override
     public Incident update(Incident incident) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
@@ -61,6 +65,7 @@ public class IncidentDAO {
         }
     }
 
+    @Override
     public void delete(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
@@ -79,6 +84,19 @@ public class IncidentDAO {
                 }
                 throw e;
             }
+        }
+    }
+
+    @Override
+    public List<Incident> findByReporterId(Long userId) {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery(
+                            "SELECT i FROM Incident i " +
+                                    "WHERE i.reportedBy.id = :userId ORDER BY i.id",
+                            Incident.class
+                    )
+                    .setParameter("userId", userId)
+                    .getResultList();
         }
     }
 }
