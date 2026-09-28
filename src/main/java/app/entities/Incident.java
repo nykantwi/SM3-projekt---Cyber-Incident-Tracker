@@ -38,4 +38,9 @@ public class Incident {
 
     // Nye Java-objekter starter med alvorlighedsgraden MEDIUM.
     private Severity severity = Severity.MEDIUM;
+
+    @ManyToOne
+    @JoinColumn(name = "reported_by_id", nullable = false)
+    @ToString.Exclude
+    private User reportedBy;
 }
