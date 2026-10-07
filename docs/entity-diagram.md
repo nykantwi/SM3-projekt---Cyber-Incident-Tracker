@@ -1,8 +1,9 @@
 # Cyber Incident Tracker – foreslået datamodel
 
 Dette diagram viser de entities, jeg foreslår til projektets første version.
-`Incident`, `IncidentStatus` og `Severity` findes allerede i koden. Brugere,
-kommentarer, tidsstempler og relationer er planlagte udvidelser.
+`Incident`, `User`, `Role`, `IncidentStatus`, `Severity` og relationen
+`reportedBy` findes i koden. Kommentarer, tidsstempler, `assignedTo` og
+`passwordHash` er planlagte udvidelser.
 
 ## Formål
 
@@ -62,9 +63,9 @@ classDiagram
 
     class Role {
         <<enumeration>>
+        REPORTER
+        ANALYST
         ADMIN
-        SECURITY_ANALYST
-        EMPLOYEE
     }
 
     User "1" <-- "0..*" Incident : reportedBy
@@ -83,6 +84,23 @@ classDiagram
 | Incident | Gemmer selve hændelsen, dens status og alvorlighed | En medarbejder har modtaget en phishingmail |
 | User | Repræsenterer rapportører, analytikere og administratorer | En analytiker får ansvaret for hændelsen |
 | Comment | Gemmer en besked om arbejdet med én hændelse | "Afsenderen er blokeret, og mailen er fjernet" |
+
+## Roller og planlagte rettigheder
+
+Alle personer er `User`-objekter med én `Role`. Vi bruger ikke separate
+klasser for rapportører, analytikere og administratorer. Nye brugere får
+automatisk `REPORTER`, og rollen gemmes som tekst i databasen.
+
+| Rolle | Ansvar | Planlagte rettigheder |
+|---|---|---|
+| REPORTER | Indberetter hændelser | Oprette incidents og se sine egne |
+| ANALYST | Undersøger og håndterer hændelser | Se alle incidents og ændre status og alvorlighedsgrad |
+| ADMIN | Administrerer systemet | Analytikerens rettigheder samt administration af brugere og roller |
+
+Rollefeltet er implementeret som data. Rettighederne i tabellen er et
+designforslag og håndhæves endnu ikke. Login og adgangskontrol tilføjes
+senere, så serveren kontrollerer den indloggede brugers rolle og ejerskab.
+Brugere skal ikke selv kunne tildele sig administratorrollen.
 
 ## Relationer og regler
 
