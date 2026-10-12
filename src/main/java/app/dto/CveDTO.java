@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-// CIT's foreløbige dataformat. Mapping fra API'ets JSON tilføjes efter valg af API.
+// De CVE-oplysninger, som CIT bruger fra det eksterne API.
 @Getter
 @Setter
 @NoArgsConstructor
