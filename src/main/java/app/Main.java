@@ -49,7 +49,5 @@ public class Main {
         } finally {
             emf.close();
         }
-
-
     }
 }
