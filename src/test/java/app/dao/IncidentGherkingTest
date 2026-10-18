@@ -1,5 +1,4 @@
 
-
 Feature: find incident by id
 Scenario: Find an existing incident
 Given an incident with ID 1 and title "Test" findes i databasen
