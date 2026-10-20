@@ -30,4 +30,6 @@ public class IncidentDTO {
         this.severity = incident.getSeverity();
         this.reportedById = incident.getReportedBy().getId();
     }
+
+
 }

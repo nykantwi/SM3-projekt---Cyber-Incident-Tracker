@@ -191,6 +191,48 @@ public class IncidentDAOTest {
         assertNotNull(commentDAO.findById(valid.getId()));
     }
 
+    @Test
+    void serviceUpdatePersistsAllFieldsAndPreservesReporter() {
+        User reporter = saveUser("reporter@example.com");
+        Incident original = saveIncident(reporter);
+        IncidentService service = new IncidentService(incidentDAO, userDAO);
+
+        Incident updated = service.updateIncident(original.getId(), "Updated", "New description",
+                Severity.HIGH, IncidentStatus.INVESTIGATING);
+
+        Incident found = incidentDAO.findById(original.getId());
+        assertEquals(original.getId(), updated.getId());
+        assertEquals("Updated", found.getTitle());
+        assertEquals("New description", found.getDescription());
+        assertEquals(Severity.HIGH, found.getSeverity());
+        assertEquals(IncidentStatus.INVESTIGATING, found.getStatus());
+        assertEquals(reporter.getId(), found.getReportedBy().getId());
+        assertEquals(1, incidentDAO.getAll().size());
+    }
+
+    @Test
+    void serviceUpdateRejectsInvalidInputWithoutChangingIncident() {
+        Incident original = saveIncident(saveUser("reporter@example.com"));
+        IncidentService service = new IncidentService(incidentDAO, userDAO);
+        Long id = original.getId();
+
+        var titleError = assertThrows(app.exceptions.ApiException.class,
+                () -> service.updateIncident(id, " ", null, Severity.HIGH, IncidentStatus.OPEN));
+        assertEquals(400, titleError.getCode());
+        assertEquals(400, assertThrows(app.exceptions.ApiException.class,
+                () -> service.updateIncident(id, "New", null, null, IncidentStatus.OPEN)).getCode());
+        assertEquals(400, assertThrows(app.exceptions.ApiException.class,
+                () -> service.updateIncident(id, "New", null, Severity.HIGH, null)).getCode());
+        assertEquals(400, assertThrows(app.exceptions.ApiException.class,
+                () -> service.updateIncident(id, "New", "x".repeat(2001),
+                        Severity.HIGH, IncidentStatus.OPEN)).getCode());
+        assertEquals(404, assertThrows(app.exceptions.ApiException.class,
+                () -> service.updateIncident(Long.MAX_VALUE, "New", null,
+                        Severity.HIGH, IncidentStatus.OPEN)).getCode());
+        assertEquals("Phishing", incidentDAO.findById(id).getTitle());
+        assertEquals(Severity.MEDIUM, incidentDAO.findById(id).getSeverity());
+    }
+
     private User saveUser(String email) {
         User user = new User();
         user.setName("Reporter");

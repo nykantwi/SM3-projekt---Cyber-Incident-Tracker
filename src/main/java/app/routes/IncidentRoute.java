@@ -20,6 +20,10 @@ public class IncidentRoute {
         return () -> {
             // Forbind GET på gruppens rodsti med getAll-metoden.
             get("/", incidentController::getAll);
+            get("/{id}",incidentController::read);
+            post("/", incidentController::create);
+            put("/{id}", incidentController::update);
+            delete("/{id}", incidentController::delete);
         };
     }
 }

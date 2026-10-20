@@ -4,6 +4,7 @@ import app.entities.Incident;
 import app.entities.User;
 import app.enums.IncidentStatus;
 import app.enums.Severity;
+import app.exceptions.ApiException;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -14,25 +15,28 @@ public class IncidentService {
     private final IIncidentDAO incidentDAO;
     private final IUserDAO userDAO;
 
-    public Incident createIncident(String title, String description, Severity severity, String reportedEmail) {
+    public Incident createIncident(String title,
+                                   String description,
+                                   Severity severity,
+                                   String reportedEmail) {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Title må ikke være tom");
+            throw new ApiException(400, "Titel må ikke være tom");
         }
 
         if (reportedEmail == null || reportedEmail.isBlank()) {
-            throw new IllegalArgumentException("Email må ikke være tom");
+            throw new ApiException (400,"Email må ikke være tom");
         }
 
         if (severity == null) {
-            throw new IllegalArgumentException("Severity must be provided");
+            throw new ApiException(400,"Severity must be provided");
         }
 
         if (description != null && description.length() > 2000) {
-            throw new IllegalArgumentException("Description must be max 2000 characters");
+            throw new ApiException(400,"Description must be max 2000 characters");
         }
         User reporter = userDAO.findByEmail(reportedEmail);
         if (reporter == null) {
-            throw new NoSuchElementException("Brugeren findes ikke");
+            throw new ApiException(400,"Brugeren findes ikke");
         }
 
         Incident incident = new Incident();
@@ -49,7 +53,7 @@ public class IncidentService {
 
         Incident incident = incidentDAO.findById(id);
         if (incident == null) {
-            throw new NoSuchElementException("Incident med id " + id + " findes ikke");
+            throw new ApiException(404, "Incident med id " + id + " findes ikke");
         }
 
         return incident;
@@ -83,5 +87,32 @@ public class IncidentService {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Id skal være større end 0");
         }
+    }
+
+    public Incident updateIncident(Long id, String title, String description,
+                                   Severity severity, IncidentStatus status) {
+        if (title == null || title.isBlank()) {
+            throw new ApiException(400, "Titel må ikke være tom");
+        }
+
+        if (severity == null) {
+            throw new ApiException(400,"Severity must be provided");
+        }
+
+        if (description != null && description.length() > 2000) {
+            throw new ApiException(400,"Description must be max 2000 characters");
+        }
+        if (status == null) {
+            throw new ApiException(400, "Status må ikke være null");
+        }
+
+        // Hent den eksisterende hændelse; rapportøren bevares.
+        Incident incident = getIncidentById(id);
+        incident.setTitle(title);
+        incident.setDescription(description);
+        incident.setSeverity(severity);
+        incident.setStatus(status);
+
+        return incidentDAO.update(incident);
     }
 }

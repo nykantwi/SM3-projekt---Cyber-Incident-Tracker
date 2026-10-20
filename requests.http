@@ -1,0 +1,28 @@
+### Opret en hændelse
+POST http://localhost:7070/api/v1/incidents
+Content-Type: application/json
+
+{
+  "title": "Mistænkelig e-mail",
+  "description": "En medarbejder har modtaget et muligt phishing.",
+  "severity": "HIGH",
+  "reportedEmail": "nanayawtnrn@gmail.com"
+
+
+}
+### Slet testhændelsen med ID 34
+DELETE http://localhost:7070/api/v1/incidents/34
+
+### Opdater en hændelse (erstat 1 med ID'et på en testhændelse)
+PUT http://localhost:7070/api/v1/incidents/1
+Content-Type: application/json
+
+{
+  "title": "Opdateret phishinghændelse",
+  "description": "Hændelsen er under undersøgelse.",
+  "severity": "HIGH",
+  "status": "INVESTIGATING"
+}
+
+### Hent hændelsen igen for at kontrollere ændringerne
+GET http://localhost:7070/api/v1/incidents/1
