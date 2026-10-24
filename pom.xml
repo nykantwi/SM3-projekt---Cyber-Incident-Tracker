@@ -20,6 +20,7 @@
         <logback-classic>1.5.27</logback-classic>
         <org.slf4j>2.0.17</org.slf4j>
         <hamcrest>3.0</hamcrest>
+        <restassured.version>5.5.0</restassured.version>
     </properties>
 
     <build>
@@ -76,6 +77,14 @@
         </dependency>
 
         <!--  TESTING      -->
+        <!-- REST Assured til HTTP-tests, samme version som i Hotel API. -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${restassured.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

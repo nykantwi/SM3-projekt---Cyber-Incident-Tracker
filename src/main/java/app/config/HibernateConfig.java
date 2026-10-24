@@ -8,7 +8,12 @@ import java.util.Properties;
 public final class HibernateConfig {
 
     private static volatile EntityManagerFactory emf;
+    private static EntityManagerFactory emfTest;
+    private static Boolean isTest = false;
 
+    public static void setTest(Boolean test) {
+        isTest = test;
+    }
     private HibernateConfig() {}
 
     public static EntityManagerFactory getEntityManagerFactory() {

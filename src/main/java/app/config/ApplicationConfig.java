@@ -48,9 +48,13 @@ public class ApplicationConfig {
         }
     }
 
+    // Main bruger denne metode til den almindelige database.
     public static Javalin startServer(int port) {
-        // Opret DAO'er med projektets database-factory.
-        EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
+        return startServer(port, HibernateConfig.getEntityManagerFactory());
+    }
+
+    // Testen kan sende sin egen database-factory med.
+    public static Javalin startServer(int port, EntityManagerFactory emf) {
         IncidentDAO incidentDAO = new IncidentDAO(emf);
         UserDAO userDAO = new UserDAO(emf);
 
