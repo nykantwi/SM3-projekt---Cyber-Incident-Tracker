@@ -58,7 +58,7 @@ public class ApiTest {
                 .build();
     }
 
-    // Samme opsætning som i IncidentDAOTest: friske data før hver test.
+    // Samme opsætning som i IncidentDAOTest
     @BeforeEach
     void setUp() {
         // Opret rapportøren, som hændelsen skal tilhøre.
