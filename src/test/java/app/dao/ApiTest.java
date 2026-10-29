@@ -304,6 +304,74 @@ public class ApiTest {
                 .body("message", equalTo("Incident med id " + incidentId + " findes ikke"));
     }
 
+    // Security: kontrollér også de requests, der skal afvises.
+    @Test
+    void getIncidentsWithoutTokenReturns401() {
+        given()
+                .spec(requestSpec)
+        .when()
+                .get("/incidents")
+        .then()
+                .statusCode(401)
+                .body("status", equalTo(401))
+                .body("message", equalTo("Du skal være logget ind"));
+    }
+
+    @Test
+    void getIncidentsWithInvalidTokenReturns401() {
+        given()
+                .spec(requestSpec)
+                .header("Authorization", "Bearer ugyldigt-token")
+        .when()
+                .get("/incidents")
+        .then()
+                .statusCode(401)
+                .body("status", equalTo(401))
+                .body("message", equalTo("Token er ugyldigt"));
+    }
+
+    @Test
+    void reporterCannotDeleteIncident() {
+        given()
+                .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
+                .pathParam("id", incidentId)
+        .when()
+                .delete("/incidents/{id}")
+        .then()
+                .statusCode(403)
+                .body("status", equalTo(403))
+                .body("message", equalTo("Kun ADMIN må slette hændelser"));
+
+        // Den afviste sletning må ikke fjerne hændelsen.
+        given()
+                .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
+                .pathParam("id", incidentId)
+        .when()
+                .get("/incidents/{id}")
+        .then()
+                .statusCode(200)
+                .body("id", equalTo(incidentId.intValue()));
+    }
+
+    @Test
+    void loginWithWrongPasswordReturns401() {
+        LoginDTO login = new LoginDTO();
+        login.setEmail("bruger@test.com");
+        login.setPassword("forkert-password"); // Bevidst forkert i denne test.
+
+        given()
+                .spec(requestSpec)
+                .body(login)
+        .when()
+                .post("/auth/login")
+        .then()
+                .statusCode(401)
+                .body("status", equalTo(401))
+                .body("message", equalTo("Forkert e-mail eller password"));
+    }
+
     // Kører én gang, når alle tests er færdige.
     @AfterAll
     static void stopServer() {

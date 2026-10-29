@@ -6,13 +6,36 @@ Baseadresse: `http://localhost:7070/api/v1`
 
 ## Endpoints
 
+Alle URL’er nedenfor er relative til baseadressen.
+
 | Metode | URL | Request Body (JSON) | Response (JSON) | Fejl |
 | --- | --- | --- | --- | --- |
-| GET | /incidents | Ingen | Liste af hændelser (1), status 200 | |
-| GET | /incidents/{id} | Ingen | Hændelse (1), status 200 | 400, 404 |
-| POST | /incidents | Oprettelsesformat (2) | Hændelse (1), status 201 | 400 |
-| PUT | /incidents/{id} | Opdateringsformat (3) | Hændelse (1), status 200 | 400, 404 |
-| DELETE | /incidents/{id} | Ingen | Ingen body, status 204 | 400, 404 |
+| POST | /auth/register | Bruger (4) | Bekræftelse (4), status 201 | 400, 409 |
+| POST | /auth/login | Login (5) | Token (5), status 200 | 401 |
+| GET | /incidents | Ingen | Liste af hændelser (1), status 200 | 401 |
+| GET | /incidents/{id} | Ingen | Hændelse (1), status 200 | 400, 401, 404 |
+| POST | /incidents | Oprettelsesformat (2) | Hændelse (1), status 201 | 400, 401 |
+| PUT | /incidents/{id} | Opdateringsformat (3) | Hændelse (1), status 200 | 400, 401, 404 |
+| DELETE | /incidents/{id} | Ingen | Ingen body, status 204 | 400, 401, 403, 404 |
+
+## Login og adgang
+
+Register og login er offentlige. Alle incident-endpoints kræver et gyldigt JWT i denne header:
+
+```http
+Authorization: Bearer INDSÆT_DIT_TOKEN
+```
+
+Ved JSON-requests skal `Content-Type: application/json` også sendes.
+
+- REPORTER, ANALYST og ADMIN kan hente, oprette og opdatere hændelser.
+- Kun ADMIN kan slette hændelser.
+- Nye brugere får rollen REPORTER. Hver bruger har én rolle.
+- Roller ændres foreløbig manuelt i databasen; der er ikke et endpoint til det.
+
+Tokenet gælder i én time. Efter en rolleændring skal brugeren logge ind igen for at få et token med den nye rolle. Tidligere udstedte tokens beholder deres rolle indtil udløb; løsningen har ikke logout med tilbagekaldelse af tokens.
+
+Adgangen er rollebaseret, ikke begrænset til brugerens egne hændelser. `reportedEmail` vælges i requesten og knyttes endnu ikke automatisk til den indloggede bruger.
 
 ## Request Body og Response-formater
 
@@ -46,7 +69,7 @@ Bruges til POST /incidents.
   "title": "Mistænkelig e-mail",
   "description": "En medarbejder har modtaget et muligt phishingforsøg.",
   "severity": "HIGH",
-  "reportedEmail": "bruger@example.com"
+  "reportedEmail": "bruger@test.com"
 }
 ```
 
@@ -85,6 +108,53 @@ Hændelsens ID og rapportør ændres ikke.
 Ved succes returneres status 200 OK og den opdaterede hændelse
 i format (1).
 
+### (4) Registrering – request og response
+
+POST /auth/register:
+
+```json
+{
+  "name": "Testbruger",
+  "email": "bruger@test.com",
+  "password": "1234"
+}
+```
+
+Navn, e-mail og password skal være udfyldt. E-mailen skal være unik.
+Passwordet gemmes som en bcrypt-hash og returneres ikke. `1234` er kun et testeksempel.
+
+Response med status 201:
+
+```json
+{
+  "status": 201,
+  "message": "Bruger oprettet"
+}
+```
+
+Registrering giver ikke automatisk et token. Brug login bagefter.
+
+### (5) Login – request og response
+
+POST /auth/login:
+
+```json
+{
+  "email": "bruger@test.com",
+  "password": "1234"
+}
+```
+
+Response med status 200 (tokenværdien er en pladsholder):
+
+```json
+{
+  "token": "INDSÆT_DIT_TOKEN"
+}
+```
+
+Kopiér tokenet til Authorization-headeren ved efterfølgende requests.
+
 ## Fejl
 
 ### 400 Bad Request – ugyldige oplysninger
@@ -95,6 +165,40 @@ Eksempel ved oprettelse eller opdatering med en tom titel:
 {
   "status": 400,
   "message": "Titel må ikke være tom"
+}
+```
+
+### 401 Unauthorized – manglende eller ugyldigt login
+
+Uden token på et beskyttet endpoint:
+
+```json
+{
+  "status": 401,
+  "message": "Du skal være logget ind"
+}
+```
+
+Ved forkert e-mail eller password returneres `Forkert e-mail eller password`.
+Ved et ugyldigt token returneres `Token er ugyldigt` eller `Token er ugyldigt eller udløbet`, afhængigt af hvilken kontrol der afviser det.
+
+### 403 Forbidden – rollen giver ikke adgang
+
+Hvis en REPORTER eller ANALYST forsøger DELETE:
+
+```json
+{
+  "status": 403,
+  "message": "Kun ADMIN må slette hændelser"
+}
+```
+
+### 409 Conflict – e-mailen er allerede registreret
+
+```json
+{
+  "status": 409,
+  "message": "E-mail er allerede i brug"
 }
 ```
 
