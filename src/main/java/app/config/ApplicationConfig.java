@@ -1,13 +1,16 @@
 package app.config;
 
 import app.controllers.ExceptionController;
+import app.controllers.SecurityController;
 import app.dao.IncidentDAO;
 import app.dao.IncidentService;
 import app.dao.UserDAO;
 import app.exceptions.ApiException;
 import app.routes.Routes;
+import app.security.ISecurityDAO;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
+import io.javalin.http.HandlerType;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
@@ -60,9 +63,23 @@ public class ApplicationConfig {
 
         // Giv DAO'erne til servicen og servicen videre til routes.
         IncidentService incidentService = new IncidentService(incidentDAO, userDAO);
-        routes = new Routes(incidentService);
+        routes = new Routes(incidentService,userDAO);
 
         var app = Javalin.create(ApplicationConfig::configuration);
+
+        SecurityController securityController = new SecurityController(userDAO);
+
+        // Kontrollér tokenet, før et incident-endpoint bliver kørt.
+        app.beforeMatched("/incidents", securityController::authenticate);
+        app.beforeMatched("/incidents/*", securityController::authenticate);
+
+        // Kontrollér også rollen, når nogen forsøger at slette.
+        app.beforeMatched("/incidents/{id}", ctx -> {
+            if (ctx.method() == HandlerType.DELETE) {
+                securityController.authorizeAdmin(ctx);
+            }
+        });
+
         app.exception(ApiException.class, exceptionController::apiExceptionHandler);
         app.exception(Exception.class, exceptionController::exceptionHandler);
         app.start(port);

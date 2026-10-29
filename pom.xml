@@ -21,7 +21,15 @@
         <org.slf4j>2.0.17</org.slf4j>
         <hamcrest>3.0</hamcrest>
         <restassured.version>5.5.0</restassured.version>
+        <token.security.version>1.0.4</token.security.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -56,6 +64,14 @@
             <artifactId>postgresql</artifactId>
             <version>${postgres.version}</version>
         </dependency>
+
+        <!-- JWT-bibliotek fra undervisningens security-skabelon. -->
+        <dependency>
+            <groupId>com.github.Hartmannsolution</groupId>
+            <artifactId>TokenSecurity</artifactId>
+            <version>${token.security.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
@@ -124,6 +140,13 @@
             <artifactId>testcontainers-postgresql</artifactId>
             <version>${testcontainers.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Password-hashing, samme bibliotek som i Carport. -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
         </dependency>
 
         <dependency>

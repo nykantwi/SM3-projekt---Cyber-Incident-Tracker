@@ -26,3 +26,69 @@ Content-Type: application/json
 
 ### Hent hændelsen igen for at kontrollere ændringerne
 GET http://localhost:7070/api/v1/incidents/1
+
+
+### Opret en bruger
+POST http://localhost:7070/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Testbruger",
+  "email": "bruger@test.com",
+  "password": "1234"
+}
+
+### Opret Admin bruger
+### Opret en bruger
+POST http://localhost:7070/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin",
+  "email": "nanayawtnrn@123.com",
+  "password": "1234"
+}
+
+
+### AUTHENTICATION
+### Log ind -- Reporter
+POST http://localhost:7070/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "bruger@test.com",
+  "password": "1234"
+}
+
+### Log ind--Admin
+POST http://localhost:7070/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "nanayawtnrn@123.com",
+  "password": "1234"
+}
+
+
+### Hent hændelser uden login
+GET http://localhost:7070/api/v1/incidents
+
+### Hent hændelser med token
+GET http://localhost:7070/api/v1/incidents
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJicnVnZXJAdGVzdC5jb20iLCJleHAiOjE3OTMyMzg5NjEsInJvbGVzIjoiUkVQT1JURVIiLCJ1c2VybmFtZSI6ImJydWdlckB0ZXN0LmNvbSJ9.0l8IIwnj1uVgAMPcaLj_Utyi_CQOUqCzEuvoh7rgwGM
+
+### AUTHORIZATION -- hvor det kun er admin der må slet
+DELETE http://localhost:7070/api/v1/incidents/36
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJuYW5heWF3dG5ybkAxMjMuY29tIiwiZXhwIjoxNzkzMjQxNDE1LCJyb2xlcyI6IkFETUlOIiwidXNlcm5hbWUiOiJuYW5heWF3dG5ybkAxMjMuY29tIn0.DQ81jYbNkGpSOsZwq2uo9BepbajOotvBIfJG_VKXaYw
+
+### Opret en ny testhændelse
+POST http://localhost:7070/api/v1/incidents
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJuYW5heWF3dG5ybkAxMjMuY29tIiwiZXhwIjoxNzkzMjQxNDE1LCJyb2xlcyI6IkFETUlOIiwidXNlcm5hbWUiOiJuYW5heWF3dG5ybkAxMjMuY29tIn0.DQ81jYbNkGpSOsZwq2uo9BepbajOotvBIfJG_VKXaYw
+
+{
+  "title": "Email hacking",
+  "description": "Hændelsen er under undersøgelse.",
+  "severity": "HIGH",
+  "reportedEmail": "nanayawtnrn@gmail.com"
+}

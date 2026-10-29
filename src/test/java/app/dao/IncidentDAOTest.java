@@ -8,6 +8,9 @@ import app.enums.IncidentStatus;
 import app.enums.Severity;
 import app.enums.Role;
 import java.util.List;
+
+import app.exceptions.ApiException;
+import app.security.ISecurityDAO;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -217,5 +220,63 @@ public class IncidentDAOTest {
         comment.setIncident(incident);
         comment.setContent(content);
         return commentDAO.create(comment);
+    }
+
+    @Test
+    void shouldCreateUserAndVerifyLogin() {
+        ISecurityDAO securityDAO = new UserDAO(emf);
+
+        User created = securityDAO.createUser(
+                "Testbruger",
+                "login@test.com",
+                "1234"
+        );
+
+        User verified = securityDAO.getVerifiedUser(
+                "login@test.com",
+                "1234"
+        );
+
+        assertEquals(created.getId(), verified.getId());
+        assertEquals("login@test.com", verified.getEmail());
+        assertEquals(Role.REPORTER, verified.getRole());
+    }
+
+    @Test
+    void shouldRejectWrongPassword() {
+        ISecurityDAO securityDAO = new UserDAO(emf);
+
+        securityDAO.createUser(
+                "Testbruger",
+                "bruger@test.com",
+                "1234"
+        );
+
+        // Forkert password skal give en ApiException.
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> securityDAO.getVerifiedUser("bruger@test.com", "forkert")
+        );
+
+        assertEquals(401, exception.getCode());
+        assertEquals("Forkert e-mail eller password", exception.getMessage());
+    }
+
+    @Test
+    void shouldRejectDuplicateEmail() {
+        ISecurityDAO securityDAO = new UserDAO(emf);
+
+        securityDAO.createUser("Testbruger", "bruger@test.com", "1234");
+
+        // Forsøg at oprette endnu en bruger med samme e-mail.
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> securityDAO.createUser(
+                        "Anden bruger", "bruger@test.com", "1234"
+                )
+        );
+
+        assertEquals(409, exception.getCode());
+        assertEquals("E-mail er allerede i brug", exception.getMessage());
     }
 }

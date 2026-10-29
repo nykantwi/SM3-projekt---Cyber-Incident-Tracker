@@ -2,11 +2,13 @@ package app.dao;
 
 import app.config.ApplicationConfig;
 import app.config.HibernateTestConfig;
+import app.dto.LoginDTO;
 import app.entities.Incident;
 import app.entities.User;
 import app.dto.CreateIncidentDTO;
 import app.dto.UpdateIncidentDTO;
 import app.enums.IncidentStatus;
+import app.enums.Role;
 import app.enums.Severity;
 import io.javalin.Javalin;
 import io.restassured.builder.RequestSpecBuilder;
@@ -32,6 +34,8 @@ public class ApiTest {
     private static Javalin app;
     private static RequestSpecification requestSpec;
     private Long incidentId;
+    private String reporterToken;
+    private String adminToken;
 
     // Starter en separat database til API-testene.
     @Container
@@ -67,10 +71,12 @@ public class ApiTest {
     // Samme opsætning som i IncidentDAOTest
     @BeforeEach
     void setUp() {
-        // Opretter useren, som hændelsen skal tilhøre.
-        User user = new User();
-        user.setName("Testbruger");
-        user.setEmail("api-test@gg.com");
+        // Constructoren hasher passwordet med bcrypt.
+        User user = new User("Testbruger", "bruger@test.com", "1234");
+
+        // ADMIN bruges til testen, der sletter en hændelse.
+        User admin = new User("Admin", "admin@test.com", "1234");
+        admin.setRole(Role.ADMIN);
 
         Incident incident = new Incident();
         incident.setTitle("Test af phishing");
@@ -86,18 +92,50 @@ public class ApiTest {
             em.createQuery("DELETE FROM Incident").executeUpdate();
             em.createQuery("DELETE FROM User").executeUpdate();
             em.persist(user);
+            em.persist(admin);
             em.persist(incident);
             em.getTransaction().commit();
 
             // Gem ID’et efter hændelsen er gemt i databasen.
             incidentId = incident.getId();
         }
+        LoginDTO login = new LoginDTO();
+        login.setEmail("bruger@test.com");
+        login.setPassword("1234");
+
+        // Log ind gennem API'et, og gem tokenet fra svaret.
+        reporterToken = given()
+                .spec(requestSpec)
+                .body(login)
+                .when()
+                .post("/auth/login")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .extract().path("token");
+
+        LoginDTO adminLogin = new LoginDTO();
+        adminLogin.setEmail("admin@test.com");
+        adminLogin.setPassword("1234");
+
+        // Log ind som ADMIN, og gem et separat token til DELETE.
+        adminToken = given()
+                .spec(requestSpec)
+                .body(adminLogin)
+        .when()
+                .post("/auth/login")
+        .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .extract().path("token");
     }
+
 
     @Test
     void getAllIncidentsReturns200() {
         given()
-                .spec(requestSpec) // Brug vores fælles request-indstillinger.
+                .spec(requestSpec)// Brug vores fælles request-indstillinger.
+                .header("Authorization", "Bearer " + reporterToken)
         .when()
                 .get("/incidents") // Send en GET-request.
         .then()
@@ -109,6 +147,7 @@ public class ApiTest {
     void getAllIncidentsReturnsTestIncident() {
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
         .when()
                 .get("/incidents")
         .then()
@@ -121,6 +160,7 @@ public class ApiTest {
     void getIncidentByIdReturnsTestIncident() {
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .pathParam("id", incidentId)
         .when()
                 .get("/incidents/{id}")
@@ -139,11 +179,12 @@ public class ApiTest {
         newIncident.setTitle("Ny phishinghændelse");
         newIncident.setDescription("En medarbejder har modtaget en mistænkelig e-mail.");
         newIncident.setSeverity(Severity.HIGH);
-        newIncident.setReportedEmail("api-test@gg.com");
+        newIncident.setReportedEmail("bruger@test.com");
 
-        // Samme fremgangsmåde som HotelRouteTest: opret og gem ID'et fra svaret.
+
         int createdId = given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .body(newIncident)
         .when()
                 .post("/incidents")
@@ -158,9 +199,10 @@ public class ApiTest {
                 .body("status", equalTo("OPEN"))
                 .extract().path("id");
 
-        // Hent hændelsen igen for at kontrollere, at den faktisk er gemt.
+
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .pathParam("id", createdId)
         .when()
                 .get("/incidents/{id}")
@@ -180,10 +222,11 @@ public class ApiTest {
         newIncident.setTitle("");
         newIncident.setDescription("Test med en tom titel.");
         newIncident.setSeverity(Severity.HIGH);
-        newIncident.setReportedEmail("api-test@gg.com");
+        newIncident.setReportedEmail("bruger@test.com");
 
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .body(newIncident)
                 .when()
                 .post("/incidents")
@@ -202,9 +245,10 @@ public class ApiTest {
         update.setSeverity(Severity.HIGH);
         update.setStatus(IncidentStatus.INVESTIGATING);
 
-        // Opdater hændelsen, som setUp() har oprettet.
+
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .pathParam("id", incidentId)
                 .body(update)
         .when()
@@ -221,6 +265,7 @@ public class ApiTest {
         // Hent hændelsen igen for at kontrollere, at ændringerne er gemt.
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .pathParam("id", incidentId)
         .when()
                 .get("/incidents/{id}")
@@ -237,6 +282,7 @@ public class ApiTest {
         // Slet hændelsen fra setUp(), og kontrollér at svaret er tomt.
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + adminToken) // Kun ADMIN må slette.
                 .pathParam("id", incidentId)
         .when()
                 .delete("/incidents/{id}")
@@ -247,6 +293,7 @@ public class ApiTest {
         // Hændelsen skal ikke længere kunne hentes efter sletningen.
         given()
                 .spec(requestSpec)
+                .header("Authorization", "Bearer " + reporterToken)
                 .pathParam("id", incidentId)
         .when()
                 .get("/incidents/{id}")
