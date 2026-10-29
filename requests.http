@@ -92,3 +92,48 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJuYW5heWF3d
   "severity": "HIGH",
   "reportedEmail": "nanayawtnrn@gmail.com"
 }
+
+### Test API'et i Docker uden token
+GET http://localhost:7071/api/v1/incidents
+
+### Opret bruger i Docker
+POST http://localhost:7071/api/v1/auth/register
+Content-Type: application/json
+
+{ "name": "yaw",
+  "email": "test@test.dk",
+  "password": "test1234"
+}
+
+### Log ind i Docker
+POST http://localhost:7071/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.dk",
+  "password": "test1234"
+}
+
+### Hent hændelser med token
+GET http://localhost:7071/api/v1/incidents
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJ0ZXN0QHRlc3QuZGsiLCJleHAiOjE3OTMzMTE0OTYsInJvbGVzIjoiUkVQT1JURVIiLCJ1c2VybmFtZSI6InRlc3RAdGVzdC5kayJ9.bSYq__rpv3faUeHuJvC_M-SVCMyc0e7sYQrQqDNpN8M
+
+### Opret hændelse i Docker
+POST http://localhost:7071/api/v1/incidents
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJ0ZXN0QHRlc3QuZGsiLCJleHAiOjE3OTMzMTE0OTYsInJvbGVzIjoiUkVQT1JURVIiLCJ1c2VybmFtZSI6InRlc3RAdGVzdC5kayJ9.bSYq__rpv3faUeHuJvC_M-SVCMyc0e7sYQrQqDNpN8M
+
+{
+  "title": "Forgotten pass",
+  "description": "har glemt mit pass test",
+  "reportedEmail": "test@test.dk",
+  "severity": "MEDIUM"
+}
+
+### Hent hændelser igen
+GET http://localhost:7071/api/v1/incidents
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJ0ZXN0QHRlc3QuZGsiLCJleHAiOjE3OTMzMTE0OTYsInJvbGVzIjoiUkVQT1JURVIiLCJ1c2VybmFtZSI6InRlc3RAdGVzdC5kayJ9.bSYq__rpv3faUeHuJvC_M-SVCMyc0e7sYQrQqDNpN8M
+
+### Hent hændelser efter genstart af docker
+GET http://localhost:7071/api/v1/incidents
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDSVQiLCJzdWIiOiJ0ZXN0QHRlc3QuZGsiLCJleHAiOjE3OTMzMTE0OTYsInJvbGVzIjoiUkVQT1JURVIiLCJ1c2VybmFtZSI6InRlc3RAdGVzdC5kayJ9.bSYq__rpv3faUeHuJvC_M-SVCMyc0e7sYQrQqDNpN8M
