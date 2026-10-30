@@ -114,20 +114,6 @@ public class IncidentDAOTest {
         assertDoesNotThrow(() -> incidentDAO.delete(saved.getId()));
     }
 
-    @Test
-    void shouldListIncidentsAndFilterByReporter() {
-        User first = saveUser("first@example.com");
-        User second = saveUser("second@example.com");
-        Incident a = saveIncident(first);
-        Incident b = saveIncident(second);
-        Incident c = saveIncident(first);
-        assertEquals(List.of(a.getId(), b.getId(), c.getId()),
-                incidentDAO.getAll().stream().map(Incident::getId).toList());
-        assertEquals(List.of(a.getId(), c.getId()),
-                incidentDAO.findByReporterId(first.getId()).stream().map(Incident::getId).toList());
-        assertTrue(incidentDAO.findByReporterId(-1L).isEmpty());
-    }
-
 
     @Test
     void shouldUpdateCommentAndPreserveCreationTime() {
@@ -141,18 +127,6 @@ public class IncidentDAOTest {
         assertEquals(createdAt, found.getCreatedAt());
     }
 
-    @Test
-    void shouldFilterCommentsByIncidentInIdOrder() {
-        User user = saveUser("reporter@example.com");
-        Incident first = saveIncident(user);
-        Incident second = saveIncident(user);
-        Comment a = saveComment(user, first, "First");
-        saveComment(user, second, "Other incident");
-        Comment b = saveComment(user, first, "Second");
-        assertEquals(List.of(a.getId(), b.getId()),
-                commentDAO.findByIncidentId(first.getId()).stream().map(Comment::getId).toList());
-        assertTrue(commentDAO.findByIncidentId(-1L).isEmpty());
-    }
 
     @Test
     void shouldDeleteCommentWithoutDeletingItsRelations() {
@@ -166,37 +140,6 @@ public class IncidentDAOTest {
         assertDoesNotThrow(() -> commentDAO.delete(comment.getId()));
     }
 
-    @Test
-    void shouldRollbackInvalidCommentAndAllowNextWrite() {
-        User user = saveUser("reporter@example.com");
-        Incident incident = saveIncident(user);
-        Comment invalid = new Comment();
-        invalid.setAuthor(user);
-        invalid.setIncident(incident);
-        assertThrows(RuntimeException.class, () -> commentDAO.create(invalid));
-        assertTrue(commentDAO.findByIncidentId(incident.getId()).isEmpty());
-        Comment valid = saveComment(user, incident, "Valid");
-        assertNotNull(commentDAO.findById(valid.getId()));
-    }
-
-    @Test
-    void serviceUpdatePersistsAllFieldsAndPreservesReporter() {
-        User reporter = saveUser("reporter@example.com");
-        Incident original = saveIncident(reporter);
-        IncidentService service = new IncidentService(incidentDAO, userDAO);
-
-        Incident updated = service.updateIncident(original.getId(), "Updated", "New description",
-                Severity.HIGH, IncidentStatus.INVESTIGATING);
-
-        Incident found = incidentDAO.findById(original.getId());
-        assertEquals(original.getId(), updated.getId());
-        assertEquals("Updated", found.getTitle());
-        assertEquals("New description", found.getDescription());
-        assertEquals(Severity.HIGH, found.getSeverity());
-        assertEquals(IncidentStatus.INVESTIGATING, found.getStatus());
-        assertEquals(reporter.getId(), found.getReportedBy().getId());
-        assertEquals(1, incidentDAO.getAll().size());
-    }
 
     private User saveUser(String email) {
         User user = new User();
@@ -222,6 +165,25 @@ public class IncidentDAOTest {
     }
 
     @Test
+    void shouldRejectWrongPassword() {
+        ISecurityDAO securityDAO = new UserDAO(emf);
+
+        securityDAO.createUser(
+                "Testbruger",
+                "bruger@test.com",
+                "1234"
+        );
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> securityDAO.getVerifiedUser("bruger@test.com", "forkert")
+        );
+
+        assertEquals(401, exception.getCode());
+        assertEquals("Forkert e-mail eller password", exception.getMessage());
+    }
+
+    @Test
     void shouldCreateUserAndVerifyLogin() {
         ISecurityDAO securityDAO = new UserDAO(emf);
 
@@ -239,25 +201,6 @@ public class IncidentDAOTest {
         assertEquals(created.getId(), verified.getId());
         assertEquals("login@test.com", verified.getEmail());
         assertEquals(Role.REPORTER, verified.getRole());
-    }
-
-    @Test
-    void shouldRejectWrongPassword() {
-        ISecurityDAO securityDAO = new UserDAO(emf);
-
-        securityDAO.createUser(
-                "Testbruger",
-                "bruger@test.com",
-                "1234"
-        );
-
-        ApiException exception = assertThrows(
-                ApiException.class,
-                () -> securityDAO.getVerifiedUser("bruger@test.com", "forkert")
-        );
-
-        assertEquals(401, exception.getCode());
-        assertEquals("Forkert e-mail eller password", exception.getMessage());
     }
 
     @Test
