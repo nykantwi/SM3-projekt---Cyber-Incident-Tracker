@@ -11,6 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+
 public class CveClient {
 
     private final HttpClient client = HttpClient.newBuilder()
@@ -55,6 +56,7 @@ public class CveClient {
             throws IOException, InterruptedException {
 
         String json = fetchJson(cveId);
+        // Læs JSON som et træ, så vi kan finde de indlejrede felter.
         JsonNode root = objectMapper.readTree(json);
 
         if (root == null || !root.isObject()) {
@@ -66,6 +68,7 @@ public class CveClient {
             throw new IllegalStateException("Ingen CVE fundet: " + cveId);
         }
 
+        // Find CVE-objektet i det første søgeresultat.
         JsonNode cve = results.get(0).path("cve");
 
         if (!cve.path("id").isTextual() || !cveId.equals(cve.path("id").asText())) {
@@ -75,6 +78,7 @@ public class CveClient {
         CveDTO dto = new CveDTO();
         dto.setCveId(cve.get("id").asText());
 
+        // Vælg de engelske beskrivelse til vores DTO.
         for (JsonNode description : cve.path("descriptions")) {
             if ("en".equals(description.path("lang").asText())
                     && description.path("value").isTextual()) {
@@ -83,30 +87,8 @@ public class CveClient {
             }
         }
 
-        dto.setCvssScore(findCvssScore(cve.path("metrics")));
         return dto;
     }
 
-    private Double findCvssScore(JsonNode metrics) {
-        for (String version : new String[]{"cvssMetricV40", "cvssMetricV31",
-                "cvssMetricV30", "cvssMetricV2"}) {
-            Double fallback = null;
-            for (JsonNode metric : metrics.path(version)) {
-                JsonNode score = metric.path("cvssData").path("baseScore");
-                if (!score.isNumber() || score.asDouble() < 0 || score.asDouble() > 10) {
-                    continue;
-                }
-                if ("Primary".equals(metric.path("type").asText())) {
-                    return score.asDouble();
-                }
-                if (fallback == null) {
-                    fallback = score.asDouble();
-                }
-            }
-            if (fallback != null) {
-                return fallback;
-            }
-        }
-        return null;
-    }
+
 }

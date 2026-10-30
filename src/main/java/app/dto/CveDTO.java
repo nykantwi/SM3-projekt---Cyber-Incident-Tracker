@@ -13,6 +13,4 @@ public class CveDTO {
 
     private String cveId;
     private String description;
-
-    private Double cvssScore;
 }

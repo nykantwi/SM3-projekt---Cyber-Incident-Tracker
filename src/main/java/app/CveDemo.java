@@ -13,7 +13,6 @@ public class CveDemo {
             CveDTO cve = client.fetchById("CVE-2021-44228");
             System.out.println("CVE: " + cve.getCveId());
             System.out.println("Beskrivelse: " + cve.getDescription());
-            System.out.println("CVSS-score: " + cve.getCvssScore());
 
         } catch (IOException | IllegalStateException e) {
             System.err.println("API-kaldet fejlede: " + e.getMessage());

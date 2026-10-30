@@ -15,40 +15,34 @@ class CveClientTest {
     }
 
     @Test
-    void mapsEnglishDescriptionAndPrefersPrimaryScore() throws Exception {
+    void mapsIdAndEnglishDescription() throws Exception {
         var client = clientWith("""
                 {"vulnerabilities":[{"cve":{
                   "id":"CVE-2021-44228",
-                  "descriptions":[{"lang":"es","value":"Otro"},{"lang":"en","value":"Log4j"}],
-                  "metrics":{"cvssMetricV31":[
-                    {"type":"Secondary","cvssData":{"baseScore":9.0}},
-                    {"type":"Primary","cvssData":{"baseScore":10.0}}
-                  ]}
+                  "descriptions":[{"lang":"es","value":"Otro"},{"lang":"en","value":"Log4j"}]
                 }}]}
                 """);
         var dto = client.fetchById("CVE-2021-44228");
         assertEquals("CVE-2021-44228", dto.getCveId());
         assertEquals("Log4j", dto.getDescription());
-        assertEquals(10.0, dto.getCvssScore());
     }
 
     @Test
-    void missingOptionalDataRemainsNull() throws Exception {
+    void missingDescriptionRemainsNull() throws Exception {
         var dto = clientWith("""
                 {"vulnerabilities":[{"cve":{"id":"CVE-2021-44228"}}]}
                 """).fetchById("CVE-2021-44228");
         assertNull(dto.getDescription());
-        assertNull(dto.getCvssScore());
     }
 
     @Test
-    void fallsBackToOlderScore() throws Exception {
+    void descriptionWithoutEnglishRemainsNull() throws Exception {
         var dto = clientWith("""
                 {"vulnerabilities":[{"cve":{"id":"CVE-2021-44228",
-                  "metrics":{"cvssMetricV2":[{"cvssData":{"baseScore":7.5}}]}
+                  "descriptions":[{"lang":"es","value":"Otro"}]
                 }}]}
                 """).fetchById("CVE-2021-44228");
-        assertEquals(7.5, dto.getCvssScore());
+        assertNull(dto.getDescription());
     }
 
     @Test
