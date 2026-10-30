@@ -143,22 +143,19 @@ Listen er tom (`[]`), hvis der ikke er oprettet hændelser. Se [den fulde API-do
 
 
 
-## Deployment
+## Deployment Notes
 
-GitHub Actions bygger projektet med Maven og kører testene. Når workflowet lykkes, bygges et Docker-image, som uploades til Docker Hub som `nyaw1/cit:latest`.
+GitHub Actions bygger projektet med Maven og kører testene. Når workflowet lykkes, bygges der et Docker-image, som bliver 
+uploadet til Docker Hub som `nyaw1/cit:latest`.
+På DigitalOcean kører API'et og PostgreSQL i Docker Compose. Caddy modtager HTTPS-trafik på `api.antwi.dk` og sender den
+videre til API-containeren på port 7070. Database- og certifikatdata bevares i Docker-volumes.
 
-På DigitalOcean kører API'et og PostgreSQL i Docker Compose. Caddy modtager HTTPS-trafik på `api.antwi.dk` og sender den videre til API-containeren på port 7070. Database- og certifikatdata bevares i Docker-volumes.
 
-Opdatering af serveren er foreløbig manuel. Efter et vellykket workflow køres følgende i DigitalOcean Console:
 
-```sh
-cd /opt/cit
-docker compose pull api
-docker compose up -d api
-```
-
-Serverens `.env` indeholder databaseoplysninger og `JWT_SECRET`. Den gemmes ikke i Git. Registrering, login og et beskyttet GET er afprøvet på serveren; HTTPS-adgang gennem domænet er også afprøvet.
+Serverens `.env` indeholder databaseoplysninger og `JWT_SECRET`. Den gemmes ikke i Git. Registrering, 
+login og et beskyttet GET er afprøvet på serveren; HTTPS-adgang gennem domænet er også afprøvet.
 
 ## Afgrænsninger og begrænsninger
-Projektet har ikke en password-reset eller token-refresh. JWT-tokens udløber efter én time og kan ikke tilbagekaldes ved logout. CVE-opslag og hændelsesstatistik fungerer som selvstændige demoer og er endnu ikke integreret i REST API’et. 
+Projektet har ikke en password-reset eller token-refresh. JWT-tokens udløber efter én time og kan ikke tilbagekaldes ved 
+logout. CVE-opslag og hændelsesstatistik fungerer som selvstændige demoer og er endnu ikke integreret i REST API’et. 
 Kommentarer findes i databasen, men har ikke egne endpoints. Opdatering af API’et på serveren sker manuelt.
