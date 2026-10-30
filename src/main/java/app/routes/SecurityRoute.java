@@ -10,7 +10,6 @@ public class SecurityRoute {
     private final SecurityController securityController;
 
     public SecurityRoute(ISecurityDAO securityDAO) {
-        // Giv DAO'en videre til controlleren.
         this.securityController = new SecurityController(securityDAO);
     }
 

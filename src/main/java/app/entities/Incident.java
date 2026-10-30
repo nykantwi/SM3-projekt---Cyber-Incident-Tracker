@@ -26,17 +26,14 @@ public class Incident {
     @Column(length = 2000)
     private String description;
 
-    // Gemmer enum-navnet, fx "OPEN", som tekst i databasen.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
 
-    // Nye Java-objekter starter med status OPEN.
     private IncidentStatus status = IncidentStatus.OPEN;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
 
-    // Nye Java-objekter starter med alvorlighedsgraden MEDIUM.
     private Severity severity = Severity.MEDIUM;
 
     @ManyToOne

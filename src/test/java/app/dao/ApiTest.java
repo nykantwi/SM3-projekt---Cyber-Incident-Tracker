@@ -37,7 +37,6 @@ public class ApiTest {
     private String reporterToken;
     private String adminToken;
 
-    // Starter en separat database til API-testene.
     @Container
     private static final PostgreSQLContainer postgres =
             new PostgreSQLContainer("postgres:16-alpine")
@@ -45,20 +44,17 @@ public class ApiTest {
                     .withUsername("test")
                     .withPassword("test");
 
-    // Kører én gang før alle tests.
+
     @BeforeAll
     static void startServer() {
-        // Forbind til den separate testdatabase.
         emf = HibernateTestConfig.createEntityManagerFactory(
                 postgres.getJdbcUrl(),
                 postgres.getUsername(),
                 postgres.getPassword()
         );
 
-        // Start serveren med testdatabasen på en ledig port.
         app = ApplicationConfig.startServer(0, emf);
 
-        // Fælles adresse og JSON-format til vores HTTP-tests.
         requestSpec = new RequestSpecBuilder()
                 .setBaseUri("http://localhost")
                 .setPort(app.port())
@@ -68,13 +64,10 @@ public class ApiTest {
                 .build();
     }
 
-    // Samme opsætning som i IncidentDAOTest
     @BeforeEach
     void setUp() {
-        // Constructoren hasher passwordet med bcrypt.
         User user = new User("Testbruger", "bruger@test.com", "1234");
 
-        // ADMIN bruges til testen, der sletter en hændelse.
         User admin = new User("Admin", "admin@test.com", "1234");
         admin.setRole(Role.ADMIN);
 
@@ -82,12 +75,8 @@ public class ApiTest {
         incident.setTitle("Test af phishing");
         incident.setReportedBy(user);
 
-        // Status er automatisk OPEN og severity MEDIUM.
-
-        // Gem testdata i den separate testdatabase.
         try (var em = emf.createEntityManager()) {
             em.getTransaction().begin();
-            // Ryd kun testdatabasen, med kommentarer før hændelser og brugere.
             em.createQuery("DELETE FROM Comment").executeUpdate();
             em.createQuery("DELETE FROM Incident").executeUpdate();
             em.createQuery("DELETE FROM User").executeUpdate();
@@ -96,14 +85,13 @@ public class ApiTest {
             em.persist(incident);
             em.getTransaction().commit();
 
-            // Gem ID’et efter hændelsen er gemt i databasen.
+
             incidentId = incident.getId();
         }
         LoginDTO login = new LoginDTO();
         login.setEmail("bruger@test.com");
         login.setPassword("1234");
 
-        // Log ind gennem API'et, og gem tokenet fra svaret.
         reporterToken = given()
                 .spec(requestSpec)
                 .body(login)
@@ -118,7 +106,7 @@ public class ApiTest {
         adminLogin.setEmail("admin@test.com");
         adminLogin.setPassword("1234");
 
-        // Log ind som ADMIN, og gem et separat token til DELETE.
+        // Logger ind som ADMIN, og gemmertoken til DELETE.
         adminToken = given()
                 .spec(requestSpec)
                 .body(adminLogin)
@@ -134,10 +122,10 @@ public class ApiTest {
     @Test
     void getAllIncidentsReturns200() {
         given()
-                .spec(requestSpec)// Brug vores fælles request-indstillinger.
+                .spec(requestSpec)
                 .header("Authorization", "Bearer " + reporterToken)
         .when()
-                .get("/incidents") // Send en GET-request.
+                .get("/incidents")
         .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON);
@@ -262,7 +250,6 @@ public class ApiTest {
                 .body("severity", equalTo("HIGH"))
                 .body("status", equalTo("INVESTIGATING"));
 
-        // Hent hændelsen igen for at kontrollere, at ændringerne er gemt.
         given()
                 .spec(requestSpec)
                 .header("Authorization", "Bearer " + reporterToken)
@@ -279,10 +266,9 @@ public class ApiTest {
 
     @Test
     void deleteIncidentRemovesPersistedIncident() {
-        // Slet hændelsen fra setUp(), og kontrollér at svaret er tomt.
         given()
                 .spec(requestSpec)
-                .header("Authorization", "Bearer " + adminToken) // Kun ADMIN må slette.
+                .header("Authorization", "Bearer " + adminToken)
                 .pathParam("id", incidentId)
         .when()
                 .delete("/incidents/{id}")
@@ -290,7 +276,6 @@ public class ApiTest {
                 .statusCode(204)
                 .body(isEmptyString());
 
-        // Hændelsen skal ikke længere kunne hentes efter sletningen.
         given()
                 .spec(requestSpec)
                 .header("Authorization", "Bearer " + reporterToken)
@@ -304,7 +289,7 @@ public class ApiTest {
                 .body("message", equalTo("Incident med id " + incidentId + " findes ikke"));
     }
 
-    // Security: kontrollér også de requests, der skal afvises.
+
     @Test
     void getIncidentsWithoutTokenReturns401() {
         given()
@@ -343,7 +328,6 @@ public class ApiTest {
                 .body("status", equalTo(403))
                 .body("message", equalTo("Kun ADMIN må slette hændelser"));
 
-        // Den afviste sletning må ikke fjerne hændelsen.
         given()
                 .spec(requestSpec)
                 .header("Authorization", "Bearer " + reporterToken)
@@ -359,7 +343,7 @@ public class ApiTest {
     void loginWithWrongPasswordReturns401() {
         LoginDTO login = new LoginDTO();
         login.setEmail("bruger@test.com");
-        login.setPassword("forkert-password"); // Bevidst forkert i denne test.
+        login.setPassword("forkert-password");
 
         given()
                 .spec(requestSpec)
@@ -372,7 +356,6 @@ public class ApiTest {
                 .body("message", equalTo("Forkert e-mail eller password"));
     }
 
-    // Kører én gang, når alle tests er færdige.
     @AfterAll
     static void stopServer() {
         if (app != null) {

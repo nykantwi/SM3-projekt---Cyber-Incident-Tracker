@@ -12,7 +12,6 @@ public class Routes {
 
     public Routes(IncidentService incidentService, ISecurityDAO securityDAO) {
 
-        // Giv servicen videre til hændelsernes routes.
         this.incidentRoute = new IncidentRoute(incidentService);
         this.securityRoute = new SecurityRoute(securityDAO);
     }
@@ -20,7 +19,6 @@ public class Routes {
     public EndpointGroup getRoutes() {
 
         return () -> {
-            // Saml hændelsernes endpoints under /incidents.
             path("/incidents", incidentRoute.getRoutes());
             path("/auth",securityRoute.getRoutes());
         };

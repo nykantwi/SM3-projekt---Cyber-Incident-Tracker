@@ -19,7 +19,6 @@ public class IncidentDatabaseDemo {
             IIncidentDAO incidentDAO = new IncidentDAO(emf);
             IUserDAO userDAO = new UserDAO(emf);
 
-            // 1. Genbrug brugeren, eller opret den ved første kørsel.
             User savedUser = userDAO.findByEmail("nana@example.com");
 
             if (savedUser == null) {
@@ -29,13 +28,11 @@ public class IncidentDatabaseDemo {
                 savedUser = userDAO.create(user);
             }
 
-            // 2. Opret hændelsen og tilknyt den gemte bruger.
             Incident incident = new Incident();
             incident.setTitle("Test incident");
             incident.setDescription("Testing DAO methods.");
             incident.setReportedBy(savedUser);
 
-            // 3. Gem og hent hændelsen igen fra databasen.
             Incident saved = incidentDAO.create(incident);
             Incident found = incidentDAO.findById(saved.getId());
             System.out.println("Gemt hændelse: " + found);

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CveClientTest {
 
-    // Erstat netværkskaldet med faste svar, så mappingen testes uden NVD.
     private CveClient clientWith(String json) {
         return new CveClient() {
             @Override

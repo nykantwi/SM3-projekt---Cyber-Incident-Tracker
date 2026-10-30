@@ -48,7 +48,6 @@ public class IncidentDAOTest {
 
     @BeforeEach
     public void setUp(){
-        // Ryd kun den isolerede testdatabase, i rækkefølge efter fremmednøgler.
         try (var em = emf.createEntityManager()) {
             em.getTransaction().begin();
             em.createQuery("DELETE FROM Comment").executeUpdate();
@@ -252,7 +251,6 @@ public class IncidentDAOTest {
                 "1234"
         );
 
-        // Forkert password skal give en ApiException.
         ApiException exception = assertThrows(
                 ApiException.class,
                 () -> securityDAO.getVerifiedUser("bruger@test.com", "forkert")
@@ -268,7 +266,6 @@ public class IncidentDAOTest {
 
         securityDAO.createUser("Testbruger", "bruger@test.com", "1234");
 
-        // Forsøg at oprette endnu en bruger med samme e-mail.
         ApiException exception = assertThrows(
                 ApiException.class,
                 () -> securityDAO.createUser(

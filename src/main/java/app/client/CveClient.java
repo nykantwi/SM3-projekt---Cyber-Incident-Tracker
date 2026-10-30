@@ -13,7 +13,6 @@ import java.time.Duration;
 
 public class CveClient {
 
-    // Genbrug klienten til API-kald.
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -22,7 +21,6 @@ public class CveClient {
     public String fetchJson(String cveId)
             throws IOException, InterruptedException {
 
-        // Tjek formatet, fx CVE-2021-44228.
         if (cveId == null || !cveId.matches("CVE-\\d{4}-\\d{4,}")) {
             throw new IllegalArgumentException("Ugyldigt CVE-ID");
         }
@@ -32,7 +30,6 @@ public class CveClient {
                         + cveId
         );
 
-        // Byg et GET-kald med en tidsgrænse.
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .timeout(Duration.ofSeconds(30))
@@ -40,13 +37,11 @@ public class CveClient {
                 .GET()
                 .build();
 
-        // Send kaldet, og modtag JSON som tekst.
         HttpResponse<String> response = client.send(
                 request,
                 HttpResponse.BodyHandlers.ofString()
         );
 
-        // Stop, hvis API'et ikke svarer med HTTP 200 (OK).
         if (response.statusCode() != 200) {
             throw new IOException(
                     "NVD svarede med HTTP " + response.statusCode()
@@ -59,7 +54,6 @@ public class CveClient {
     public CveDTO fetchById(String cveId)
             throws IOException, InterruptedException {
 
-        // fetchJson klarer validering og HTTP-kald.
         String json = fetchJson(cveId);
         JsonNode root = objectMapper.readTree(json);
 
@@ -81,7 +75,6 @@ public class CveClient {
         CveDTO dto = new CveDTO();
         dto.setCveId(cve.get("id").asText());
 
-        // Beskrivelser kan have flere sprog; vælg den engelske.
         for (JsonNode description : cve.path("descriptions")) {
             if ("en".equals(description.path("lang").asText())
                     && description.path("value").isTextual()) {
@@ -95,7 +88,6 @@ public class CveClient {
     }
 
     private Double findCvssScore(JsonNode metrics) {
-        // Foretræk nyere CVSS-versioner. Manglende score forbliver null.
         for (String version : new String[]{"cvssMetricV40", "cvssMetricV31",
                 "cvssMetricV30", "cvssMetricV2"}) {
             Double fallback = null;
@@ -104,7 +96,6 @@ public class CveClient {
                 if (!score.isNumber() || score.asDouble() < 0 || score.asDouble() > 10) {
                     continue;
                 }
-                // Brug den primære vurdering, hvis den findes.
                 if ("Primary".equals(metric.path("type").asText())) {
                     return score.asDouble();
                 }

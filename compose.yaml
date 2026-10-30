@@ -8,7 +8,6 @@ services:
     volumes:
       - cit_data:/var/lib/postgresql/data
 
-    # API'et starter først, når databasen er klar.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s

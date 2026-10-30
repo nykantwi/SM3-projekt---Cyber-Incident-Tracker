@@ -15,14 +15,11 @@
     public class IncidentStatisticsDemo {
         public static void main(String[] args) {
 
-            // Puljen kan udføre op til to opgaver samtidigt.
             ExecutorService executor = Executors.newFixedThreadPool(2);
 
-
-            // Hent factoryen, som DAO'en bruger til databaseforbindelser.
             EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
             IncidentDAO incidentDAO = new IncidentDAO(emf);
-            //gemmer all incident i daoen som en List af incident
+
             List<Incident> incidents = incidentDAO.getAll();
 
 
@@ -55,8 +52,7 @@
             incidents.add(incident1);
 
 
-            // Send begge opgaver til thread, så de kan køre samtidigt.
-            // Future-objekterne bruges bagefter til at hente resultaterne med get().
+            // Sender begge opgaver til thread, så de kan køre samtidigt.
             Future<Integer> openResult = executor.submit(countOpen);
             Future<Integer> openResult1 = executor.submit(countMedium);
 

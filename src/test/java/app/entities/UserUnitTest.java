@@ -24,7 +24,6 @@ class UserUnitTest {
     void passwordIsStoredAsHash() {
         User user = new User("Testbruger", "test@123.com", "1234");
 
-        // Det gemte hash skal være forskelligt fra passwordet.
         assertNotNull(user.getPasswordHash());
         assertNotEquals("1234", user.getPasswordHash());
     }

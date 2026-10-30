@@ -36,7 +36,6 @@ public class Comment {
     @ToString.Exclude
     private Incident incident;
 
-    // Hibernate sætter tidspunktet, når kommentaren gemmes første gang.
     @PrePersist
     private void onCreate() {
         createdAt = LocalDateTime.now();

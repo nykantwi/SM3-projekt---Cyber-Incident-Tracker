@@ -106,7 +106,6 @@ public class IncidentService {
             throw new ApiException(400, "Status må ikke være null");
         }
 
-        // Hent den eksisterende hændelse; rapportøren bevares.
         Incident incident = getIncidentById(id);
         incident.setTitle(title);
         incident.setDescription(description);

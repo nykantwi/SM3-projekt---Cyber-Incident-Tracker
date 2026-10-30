@@ -34,7 +34,6 @@ public class User implements ISecurityUser {
 
     @Override
     public boolean verifyPassword(String password) {
-        // Brugere uden et password-hash kan ikke logge ind.
         if (password == null || passwordHash == null) {
             return false;
         }
@@ -42,14 +41,12 @@ public class User implements ISecurityUser {
         return BCrypt.checkpw(password, passwordHash);
     }
 
-    // Gemmer kun passwordets hash.
     @Column(name = "password_hash")
     @ToString.Exclude
     @JsonIgnore
     @Setter(AccessLevel.NONE)
     private String passwordHash;
 
-    // Hver bruger har én rolle. Rollenavnet gemmes som tekst i databasen.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.REPORTER;

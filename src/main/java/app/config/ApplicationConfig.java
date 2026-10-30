@@ -51,17 +51,14 @@ public class ApplicationConfig {
         }
     }
 
-    // Main bruger denne metode til den almindelige database.
     public static Javalin startServer(int port) {
         return startServer(port, HibernateConfig.getEntityManagerFactory());
     }
 
-    // Testen kan sende sin egen database-factory med.
     public static Javalin startServer(int port, EntityManagerFactory emf) {
         IncidentDAO incidentDAO = new IncidentDAO(emf);
         UserDAO userDAO = new UserDAO(emf);
 
-        // Giv DAO'erne til servicen og servicen videre til routes.
         IncidentService incidentService = new IncidentService(incidentDAO, userDAO);
         routes = new Routes(incidentService,userDAO);
 
@@ -69,11 +66,9 @@ public class ApplicationConfig {
 
         SecurityController securityController = new SecurityController(userDAO);
 
-        // Kontrollér tokenet, før et incident-endpoint bliver kørt.
         app.beforeMatched("/incidents", securityController::authenticate);
         app.beforeMatched("/incidents/*", securityController::authenticate);
 
-        // Kontrollér også rollen, når nogen forsøger at slette.
         app.beforeMatched("/incidents/{id}", ctx -> {
             if (ctx.method() == HandlerType.DELETE) {
                 securityController.authorizeAdmin(ctx);

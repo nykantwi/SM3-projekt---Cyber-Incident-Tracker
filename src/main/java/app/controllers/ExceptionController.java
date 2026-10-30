@@ -15,10 +15,10 @@ public class ExceptionController {
         ctx.json(new Message(e.getCode(), e.getMessage()));
     }
     public void exceptionHandler(Exception e, Context ctx) {
-        // Gem fejldetaljerne i loggen.
+
         LOGGER.error("Uventet serverfejl", e);
 
-        // Send en generel besked til klienten.
+
         ctx.status(500);
         ctx.json(new Message(500, "Der opstod en intern serverfejl"));
     }
